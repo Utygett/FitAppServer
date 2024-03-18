@@ -15,17 +15,15 @@ RUN apt install cmake -y
 RUN apt install -y libpqxx-dev
 # Устанавливаем рабочую директорию
 RUN apt install -y git
-WORKDIR /usr/src/app/server
+WORKDIR /usr/src/app
 # Копируем исходный код сервера внутрь контейнера
-COPY src /usr/src/app/server/src
-COPY CMakeLists.txt /usr/src/app/server
-# Команда, которая будет выполнена при запуске контейнера
+RUN pwd
+RUN git clone https://github.com/Utygett/FitAppServer.git FitAppServer
+WORKDIR /usr/src/app/FitAppServer
+# создание директории сборки
 RUN mkdir build
-WORKDIR /usr/src/app/server/build
-#WORKDIR /usr/src/app/server
-#RUN pwd
-#RUN ls -la
-#RUN cat main.cpp
-#CMD [ "cat main.cpp" ]
+WORKDIR /usr/src/app/FitAppServer/build
+
 RUN cmake ..
 RUN make
+CMD [ "./my_executable" ]

@@ -10,7 +10,7 @@ namespace http = beast::http;
 
 using json = nlohmann::json;
 
-std::string g_connectionString = "host=localhost port=54321 dbname=health user=postgres password =12345";
+std::string g_connectionString = "host=localhost port=5432 dbname=health user=postgres password =12345";
 
 // Функция для выполнения запроса к базе данных и преобразования результата в JSON
 nlohmann::json execute_query_to_json(pqxx::connection& conn, const std::string& sql_query) {
@@ -123,7 +123,7 @@ int main() {
         boost::asio::io_context io_context;
         // Создание acceptor для прослушивания порта 8080
         tcp::acceptor acceptor(io_context, tcp::endpoint(tcp::v4(), 8080));
-
+        std::cout << "Server started" << std::endl;
         while (true) {
             // Создание сокета
             tcp::socket socket(io_context);
