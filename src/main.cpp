@@ -10,7 +10,7 @@ namespace http = beast::http;
 
 using json = nlohmann::json;
 
-std::string g_connectionString = "host=localhost port=5432 dbname=health user=postgres password =12345";
+std::string g_connectionString = "host=docker-potgresql-db-1 port=5432 dbname=health user=postgres password =12345";
 
 // Функция для выполнения запроса к базе данных и преобразования результата в JSON
 nlohmann::json execute_query_to_json(pqxx::connection& conn, const std::string& sql_query) {
