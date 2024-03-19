@@ -17,13 +17,8 @@ RUN apt install -y libpqxx-dev
 RUN apt install -y git
 WORKDIR /usr/src/app
 # Копируем исходный код сервера внутрь контейнера
-RUN ls -a
-RUN git clone https://github.com/Utygett/FitAppServer.git FitAppServer
-WORKDIR /usr/src/app/FitAppServer
-# создание директории сборки
-RUN mkdir build
-WORKDIR /usr/src/app/FitAppServer/build
 
-RUN cmake ..
-RUN make
-CMD [ "./my_executable" ]
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

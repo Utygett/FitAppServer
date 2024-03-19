@@ -9,7 +9,7 @@ include_directories(/usr/include/x86_64-linux-gnu)
 link_directories(/usr/lib/x86_64-linux-gnu)
 
 # Добавляем исполняемый файл
-add_executable(my_executable src/main.cpp)
+add_executable(server src/main.cpp)
 
 # Указываем библиотеки для линковки
-target_link_libraries(my_executable pqxx-6.4)
+target_link_libraries(server pqxx-6.4)
