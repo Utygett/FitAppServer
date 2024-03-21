@@ -12,6 +12,16 @@ else
     git clone https://github.com/Utygett/FitAppServer.git FitAppServer
 fi
 
+
+# Создаем директорию для сборки и переходим в неё
+mkdir -p /usr/src/app/FitAppServer/test/build
+cd /usr/src/app/FitAppServer/test/build
+# Запускаем cmake и make
+cmake ..
+make
+
+ctest
+
 # Создаем директорию для сборки и переходим в неё
 mkdir -p /usr/src/app/FitAppServer/build
 cd /usr/src/app/FitAppServer/build
