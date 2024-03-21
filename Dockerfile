@@ -13,8 +13,11 @@ RUN apt update
 RUN apt install cmake -y
 # устанавливаем постгрес
 RUN apt install -y libpqxx-dev
-# Устанавливаем рабочую директорию
+# устанавливаем гит
 RUN apt install -y git
+# устанавливаем гугл тест
+RUN apt install -y libgtest-dev
+# Устанавливаем рабочую директорию
 WORKDIR /usr/src/app
 # Копируем исходный код сервера внутрь контейнера
 
