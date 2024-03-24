@@ -4,7 +4,9 @@ using namespace std;
 using json = nlohmann::json;
 
 request_handler::request_map request_handler::s_request_ids = {
-    {"get_dishes_by_filter", get_dish_by_filter}
+    {"get_dishes_by_filter", get_dish_by_filter},
+    {"nutritional_info", nutritional_info}
+
 };
 
 /**
@@ -63,6 +65,7 @@ string request_handler::prepare_database_request()
     switch (request_type)
     {
     case get_dish_by_filter: make_get_dish_by_filter(); break;
+    case nutritional_info: make_nutritional_info(); break;
     case unkwon_request:
         m_request_status = request_status::error;
         m_database_request << "Error: Unknow request type-<" << m_json_request["request_type"] << ">";
@@ -88,5 +91,32 @@ void request_handler::make_get_dish_by_filter()
     m_database_request << "SELECT dish_id, dish_name, dish_kkal "
                 << "FROM dishes "
                 << "WHERE dish_name ILIKE '%" << filter << "%'";
+    m_request_status = request_status::ready;
+}
+
+void request_handler::make_nutritional_info()
+{
+    string dish_id = m_json_request["dish_id"];
+    if(dish_id.empty())
+    {
+        m_request_status = request_status::error;
+        m_database_request << "Error: parametr empty JSON-parametr <dish_id>.";
+        return ;
+    }
+    m_database_request << "SELECT "
+                         << "dishes.dish_id, "
+                         << "dishes.dish_name, "
+                         << "dishes.dish_kkal AS total_kkal, "
+                         << "SUM(CASE WHEN microelements.element_name = 'Белки' THEN ingredients_microelements.quantity ELSE 0 END) AS protein, "
+                         << "SUM(CASE WHEN microelements.element_name = 'Жиры' THEN ingredients_microelements.quantity ELSE 0 END) AS fat, "
+                         << "SUM(CASE WHEN microelements.element_name = 'Углеводы' THEN ingredients_microelements.quantity ELSE 0 END) AS carbohydrates "
+                         << "FROM "
+                         << "dishes "
+                         << "JOIN ingredients_microelements ON dishes.dish_id = ingredients_microelements.ingredient_id "
+                         << "JOIN microelements ON ingredients_microelements.element_id = microelements.element_id "
+                         << "WHERE "
+                         << "dishes.dish_id = '" << dish_id << "' "
+                         << "GROUP BY "
+                         << "dishes.dish_id, dishes.dish_name";
     m_request_status = request_status::ready;
 }

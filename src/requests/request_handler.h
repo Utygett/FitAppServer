@@ -14,7 +14,8 @@ class request_handler
     */
     enum request_type_id {
         unkwon_request,          ///< Неизвестный тип запроса.
-        get_dish_by_filter      ///< Поиск блюд по определенному фильтру.
+        get_dish_by_filter,      ///< Поиск блюд по определенному фильтру.
+        nutritional_info        ///< Получение данных о питательной ценности блюда
     };
 public:
     /**
@@ -34,6 +35,7 @@ private:
 private:
     request_type_id get_request_type();
     void make_get_dish_by_filter();
+    void make_nutritional_info();
 public:
     request_handler(const std::string &request);
     ~request_handler();

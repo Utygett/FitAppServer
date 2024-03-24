@@ -87,7 +87,7 @@ nlohmann::json database_connection_pool::execute_query_to_json(const std::string
 
 #ifdef DEBUG
         // Преобразование JSON в строку
-        std::cout << "Response JSON DATA" << result_json.dump(4) << std::endl; 
+        std::cout << "Response JSON DATA" << result_json.dump(4) << std::endl;
 #endif
         return std::move(result_json);
     } catch (const std::exception& e) {
