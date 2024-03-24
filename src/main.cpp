@@ -4,7 +4,9 @@
 #include "nlohmann/json.hpp"
 #include <pqxx/pqxx>
 
-#include "./requests/request_handler.h"
+#include "requests/request_handler.h"
+#include "database/database_connection_pool.h"
+#include "config/config.h"
 
 using tcp = boost::asio::ip::tcp;
 namespace beast = boost::beast;
@@ -14,68 +16,36 @@ using namespace std;
 
 using json = nlohmann::json;
 
-std::string g_connectionString = "host=docker-potgresql-db-1 port=5432 dbname=health user=postgres password =12345";
+config g_cfg("config.ini");
 
-// Функция для выполнения запроса к базе данных и преобразования результата в JSON
-nlohmann::json execute_query_to_json(pqxx::connection& conn, const std::string& sql_query) {
-    try {
-        pqxx::work txn(conn); // Начало транзакции
-        pqxx::result res = txn.exec(sql_query); // Выполнение запроса
-        txn.commit(); // Фиксация транзакции
-
-        // Преобразование результата в JSON
-        json result_json;
-        for (const auto& row : res) {
-            json row_json;
-            for (const auto& field : row) {
-                row_json[field.name()] = field.c_str(); // Используйте field.c_str() для получения значения поля
-            }
-            result_json.push_back(row_json);
-        }
-
-        // Преобразование JSON в строку
-        std::cout << "Response JSON DATA" << result_json.dump(4) << std::endl; 
-        return std::move(result_json);
-    } catch (const std::exception& e) {
-        std::cerr << "Error executing query: " << e.what() << std::endl;
-        return {}; // Возвращаем пустую строку в случае ошибки
-    }
-}
+std::string g_connectionString = "host=localhost port=54321 dbname=health user=postgres password =12345";
 
 
-//nlohmann::json request_to_database(const string &request)
-//{
-    //pqxx::connection connectionObject(g_connectionString.c_str());
-  //  std::move(execute_query_to_json(connectionObject, request));
-//}
 
-void filter_by_dish(http::request<http::string_body>& req, tcp::socket& socket) {
-   // Здесь должен быть ваш код для поиска блюд по filter
-    std::cout << "void handle_request(http::request<http::string_body>& req, tcp::socket& socket) {" << std::endl;
-    
-    // Возвращаем результат в формате JSON
-   // nlohmann::json found_dishes = getDishesByfilterFromDB(jRequestData["filter"]);    
-}
+database_connection_pool g_database_pool(g_connectionString, 5); ///< Глобальный объект пула потоков
+
+
 
 // Функция для обработки HTTP-запросов
-void handle_request(http::request<http::string_body>& req, tcp::socket& socket) {
+void handle_request(http::request<http::string_body>& req, tcp::socket& socket)
+{
     std::cout << "Request method is" << req.target() << std::endl;
     // Обрезка запроса до первого вопросительного знака, если он присутствует
     std::string target = req.target().to_string();
-    if (const auto pos = target.find('?'); pos != std::string::npos) {
+    if (const auto pos = target.find('?'); pos != std::string::npos) 
+    {
         target.erase(pos);
     }
     http::status status = http::status::not_found;
     json answer;
-    answer["status"] = "unknow request"; 
+    answer["status"] = "unknow request";
     // если метод POST то обрабатываем запрос
-    if (req.method() == http::verb::post) {
+    if (req.method() == http::verb::post) 
+    {
         // Обработка запроса
-
         request_handler handler(req.body());
         string sql_request = handler.prepare_database_request();
-        cout << sql_request << endl;
-        answer;
+        answer = g_database_pool.execute_query_to_json(sql_request);
         status = http::status::ok;
     }
     http::response<http::string_body> res{status, req.version()};
@@ -131,7 +101,7 @@ int main() {
             std::thread(do_session, std::move(socket)).detach();
         }
     } catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
+        std::cerr << "Exception: " << e.what() << std::endl; //TODO LOG error
         return 1;
     }
 
