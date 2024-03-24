@@ -12,7 +12,8 @@ RUN apt-get update && apt-get install -y \
 RUN apt update
 RUN apt install cmake -y
 # устанавливаем постгрес
-RUN apt install -y libpqxx-dev
+RUN apt install -y libpqxx-dev,
+    
 # устанавливаем гит
 RUN apt install -y git
 # устанавливаем гугл тест

@@ -4,9 +4,13 @@
 #include "nlohmann/json.hpp"
 #include <pqxx/pqxx>
 
+#include "./requests/request_handler.h"
+
 using tcp = boost::asio::ip::tcp;
 namespace beast = boost::beast;
 namespace http = beast::http;
+
+using namespace std;
 
 using json = nlohmann::json;
 
@@ -34,46 +38,23 @@ nlohmann::json execute_query_to_json(pqxx::connection& conn, const std::string& 
         return std::move(result_json);
     } catch (const std::exception& e) {
         std::cerr << "Error executing query: " << e.what() << std::endl;
-        return ""; // Возвращаем пустую строку в случае ошибки
+        return {}; // Возвращаем пустую строку в случае ошибки
     }
 }
 
-nlohmann::json getDishesByfilterFromDB(const std::string &filter) {
 
-    std::stringstream ssRequest; 
-    ssRequest << "SELECT dish_id, dish_name, dish_kkal "
-                << "FROM dishes "
-                << "WHERE dish_name ILIKE '%" << filter << "%'";
-    try
-    {
-        pqxx::connection connectionObject(g_connectionString.c_str());
-
-        return std::move(execute_query_to_json(connectionObject, ssRequest.str()));
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << e.what() << std::endl;
-    }
-    return "";
-}
+//nlohmann::json request_to_database(const string &request)
+//{
+    //pqxx::connection connectionObject(g_connectionString.c_str());
+  //  std::move(execute_query_to_json(connectionObject, request));
+//}
 
 void filter_by_dish(http::request<http::string_body>& req, tcp::socket& socket) {
    // Здесь должен быть ваш код для поиска блюд по filter
     std::cout << "void handle_request(http::request<http::string_body>& req, tcp::socket& socket) {" << std::endl;
-    // Получаем данные из тела запроса
-    std::string json_data = req.body();
-    // Здесь вы можете разобрать JSON и выполнить необходимую обработку
-    std::cout << "Received JSON data: " << json_data << std::endl;
-    nlohmann::json jRequestData = json::parse(json_data);
+    
     // Возвращаем результат в формате JSON
-    nlohmann::json found_dishes = getDishesByfilterFromDB(jRequestData["filter"]);
-    http::response<http::string_body> res{http::status::ok, req.version()};
-    res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-    res.set(http::field::content_type, "application/json");
-    res.keep_alive(req.keep_alive());
-    res.body() = found_dishes.dump();
-    res.prepare_payload();
-    http::write(socket, res);
+   // nlohmann::json found_dishes = getDishesByfilterFromDB(jRequestData["filter"]);    
 }
 
 // Функция для обработки HTTP-запросов
@@ -84,20 +65,26 @@ void handle_request(http::request<http::string_body>& req, tcp::socket& socket) 
     if (const auto pos = target.find('?'); pos != std::string::npos) {
         target.erase(pos);
     }
-    // Извлечение параметра dish_name_filter из запроса
-    if (req.method() == http::verb::post && target == "/find_dish_by_name_filter") {
-        // Обработка запроса для маршрута /find_dish_by_name_filter
-        filter_by_dish(req, socket);
-    } else {
-        // В случае, если маршрут не совпадает с ожидаемым, можно отправить ответ с ошибкой 404 Not Found
-        http::response<http::string_body> res{http::status::not_found, req.version()};
-        res.set(http::field::server, "MyServer");
-        res.set(http::field::content_type, "text/plain");
-        res.keep_alive(req.keep_alive());
-        res.body() = "Error 404: Not Found";
-        res.prepare_payload();
-        http::write(socket, res);
+    http::status status = http::status::not_found;
+    json answer;
+    answer["status"] = "unknow request"; 
+    // если метод POST то обрабатываем запрос
+    if (req.method() == http::verb::post) {
+        // Обработка запроса
+
+        request_handler handler(req.body());
+        string sql_request = handler.prepare_database_request();
+        cout << sql_request << endl;
+        answer;
+        status = http::status::ok;
     }
+    http::response<http::string_body> res{status, req.version()};
+    res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    res.set(http::field::content_type, "application/json");
+    res.keep_alive(req.keep_alive());
+    res.body() = answer.dump();
+    res.prepare_payload();
+    http::write(socket, res);
 }
 
 // Функция для обработки соединения
