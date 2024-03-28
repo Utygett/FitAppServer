@@ -71,7 +71,8 @@ nlohmann::json database_connection_pool::execute_query_to_json(const std::string
 
         // Преобразование результата в JSON
         json result_json;
-        for (const auto& row : res) {
+        for (const auto& row : res)
+        {
             json row_json;
             for (const auto& field : row) {
                 row_json[field.name()] = field.c_str(); // Используйте field.c_str() для получения значения поля
